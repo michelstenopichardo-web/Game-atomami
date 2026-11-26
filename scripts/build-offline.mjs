@@ -21,7 +21,7 @@ function strip(src) {
 const game = strip(read('js/game.js'));
 const ai = strip(read('js/ai.js'));
 const workerSrc = [game, ai, strip(read('js/ai-worker.js'))].join('\n');
-const appCode = [game, ai, strip(read('js/i18n.js')), strip(read('js/sound.js')), strip(read('js/app.js'))].join('\n');
+const appCode = [game, ai, strip(read('js/i18n.js')), strip(read('js/themes.js')), strip(read('js/sound.js')), strip(read('js/app.js'))].join('\n');
 
 const html = read('index.html');
 const body = html.slice(html.indexOf('<body>') + 6, html.indexOf('<script type="module"'));
@@ -32,6 +32,7 @@ const page = `<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0b0d1a">
 <title>Atomami</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&display=swap">
 <style>
 ${css}
 </style>

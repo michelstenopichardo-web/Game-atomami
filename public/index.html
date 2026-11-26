@@ -13,6 +13,9 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -24,24 +27,7 @@
         <button class="chip" id="btn-lang" aria-label="Language">ES</button>
         <button class="chip" id="btn-sound" aria-label="Sound">🔊</button>
       </div>
-      <div class="logo" aria-hidden="true">
-        <svg viewBox="0 0 120 120" class="logo-atom">
-          <defs>
-            <radialGradient id="lg-core" cx="50%" cy="45%" r="55%">
-              <stop offset="0%" stop-color="#fff3c4"/>
-              <stop offset="55%" stop-color="#ffb02e"/>
-              <stop offset="100%" stop-color="#b35a00"/>
-            </radialGradient>
-          </defs>
-          <g fill="none" stroke-width="3">
-            <ellipse cx="60" cy="60" rx="52" ry="18" stroke="#4cc9f0" opacity=".9"/>
-            <ellipse cx="60" cy="60" rx="52" ry="18" stroke="#ffb02e" opacity=".9" transform="rotate(60 60 60)"/>
-            <ellipse cx="60" cy="60" rx="52" ry="18" stroke="#b388ff" opacity=".9" transform="rotate(120 60 60)"/>
-          </g>
-          <circle cx="60" cy="60" r="13" fill="url(#lg-core)"/>
-          <circle class="orbiter o1" cx="112" cy="60" r="5" fill="#4cc9f0"/>
-        </svg>
-      </div>
+      <div class="logo" id="logo" aria-hidden="true"></div>
       <h1 class="title">ATOMAMI</h1>
       <p class="tagline" data-i18n="tagline"></p>
 
@@ -50,6 +36,11 @@
         <button class="btn" id="btn-ai"><span class="ico">🤖</span><span data-i18n="playAI"></span></button>
         <button class="btn" id="btn-local"><span class="ico">👥</span><span data-i18n="playLocal"></span></button>
         <button class="btn ghost" id="btn-rules"><span class="ico">📖</span><span data-i18n="howToPlay"></span></button>
+      </div>
+      <div class="theme-pick" role="group">
+        <span data-i18n="theme"></span>
+        <button class="chip" data-theme-pick="alchemy" aria-pressed="false"></button>
+        <button class="chip" data-theme-pick="atom" aria-pressed="false"></button>
       </div>
       <p class="install-hint" id="install-hint" data-i18n="installHint" hidden></p>
       <p class="install-hint" id="offline-note" data-i18n="offlineNote" hidden></p>
@@ -155,6 +146,7 @@
       <header class="sheet-head"><h2 data-i18n="menu"></h2><button class="icon-btn" data-close aria-label="Close">✕</button></header>
       <div class="sheet-body">
         <button class="btn" id="btn-m-rules"><span class="ico">📖</span><span data-i18n="howToPlay"></span></button>
+        <button class="btn" id="btn-m-theme"><span class="ico">🎨</span><span data-i18n="changeTheme"></span></button>
         <button class="btn" id="btn-m-sound"><span class="ico">🔊</span><span data-i18n="toggleSound"></span></button>
         <button class="btn" id="btn-m-resign"><span class="ico">🏳️</span><span data-i18n="resign"></span></button>
         <button class="btn ghost" id="btn-m-exit"><span class="ico">🚪</span><span data-i18n="exitToMenu"></span></button>

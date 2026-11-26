@@ -1,6 +1,7 @@
 // Atomami — app controller (screens, board UI, AI and online play).
 import { newGame, legalMoves, applyMove, resign, targetsFor, pieceAt, sameMove, CARDS, CARD_IDS, REACTOR, SIZE } from './game.js';
-import { t, setLang, getLang } from './i18n.js';
+import { t, setLang, getLang, setThemeVars } from './i18n.js';
+import { THEMES, THEME_IDS, DEFAULT_THEME, setTheme, theme, cardLabel } from './themes.js';
 import { play, unlockAudio, setSoundEnabled, soundEnabled } from './sound.js';
 import { chooseMove } from './ai.js';
 
@@ -102,6 +103,7 @@ function closeOverlay(id) {
 
 // ---------------- i18n ----------------
 function applyTexts() {
+  applyThemeLook();
   $$('[data-i18n]').forEach((el) => (el.textContent = t(el.dataset.i18n)));
   $('#btn-lang').textContent = getLang().toUpperCase();
   $('#input-name').placeholder = getLang() === 'es' ? 'Jugador' : 'Player';
@@ -109,6 +111,28 @@ function applyTexts() {
   updateResume();
   buildRules();
   if (app.game) render();
+}
+
+// ---------------- themes ----------------
+setThemeVars((lang) => theme().terms[lang] || theme().terms.es);
+
+function applyThemeLook() {
+  const th = theme();
+  for (const id of THEME_IDS) document.body.classList.toggle('theme-' + id, id === th.id);
+  $('#logo').innerHTML = th.logo;
+  for (const b of $$('[data-theme-pick]')) {
+    const other = THEMES[b.dataset.themePick];
+    b.textContent = `${other.icon} ${other.name[getLang()]}`;
+    b.setAttribute('aria-pressed', String(other.id === th.id));
+  }
+}
+
+function changeTheme(id) {
+  setTheme(id);
+  store.set('theme', theme().id);
+  if (app.mode === 'local') app.names = [t('amber'), t('cobalt')];
+  if (app.game) buildBoard(); // pieces and cards get the new look
+  applyTexts();
 }
 
 function buildRules() {
@@ -152,6 +176,7 @@ function mustPass() {
  */
 function cardEl(cardId, { view = 'up', owner = null } = {}) {
   const card = CARDS[cardId];
+  const look = cardLabel(cardId, getLang());
   const el = document.createElement('div');
   el.className = 'card' + (owner === null ? '' : ' team' + owner);
   el.dataset.card = cardId;
@@ -169,8 +194,8 @@ function cardEl(cardId, { view = 'up', owner = null } = {}) {
   const label = document.createElement('div');
   label.className = 'label';
   label.innerHTML = `<span class="sym"></span><span class="cname"></span>`;
-  label.querySelector('.sym').textContent = card.symbol;
-  label.querySelector('.cname').textContent = card[getLang()] || card.es;
+  label.querySelector('.sym').textContent = look.symbol;
+  label.querySelector('.cname').textContent = look.name;
   el.append(mini, label);
   return el;
 }
@@ -198,8 +223,6 @@ function buildBoard() {
   lastHands = { top: '', bottom: '', flux: '' };
 }
 
-const CORE_SVG = `<svg viewBox="0 0 100 100" aria-hidden="true"><g class="spin"><ellipse cx="50" cy="50" rx="46" ry="16"/><ellipse cx="50" cy="50" rx="46" ry="16" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="46" ry="16" transform="rotate(120 50 50)"/></g></svg>`;
-
 function renderPieces() {
   const g = app.game;
   const alive = new Set();
@@ -208,7 +231,7 @@ function renderPieces() {
     let el = pieceEls.get(p.id);
     if (!el) {
       el = document.createElement('div');
-      el.innerHTML = (p.kind === 'core' ? CORE_SVG : '') + '<div class="orb"></div>';
+      el.innerHTML = theme().piece(p.kind, p.owner);
       $('#pieces').appendChild(el);
       pieceEls.set(p.id, el);
     }
@@ -875,6 +898,12 @@ function wire() {
     store.set('lang', getLang());
     applyTexts();
   });
+  $$('[data-theme-pick]').forEach((b) => b.addEventListener('click', () => changeTheme(b.dataset.themePick)));
+  $('#btn-m-theme').addEventListener('click', () => {
+    const next = THEME_IDS[(THEME_IDS.indexOf(theme().id) + 1) % THEME_IDS.length];
+    changeTheme(next);
+    closeOverlay('overlay-menu');
+  });
   const toggleSound = () => {
     setSoundEnabled(!soundEnabled());
     store.set('sound', soundEnabled());
@@ -1041,6 +1070,7 @@ function wire() {
 function init() {
   const lang = store.get('lang', null) || ((navigator.language || 'es').toLowerCase().startsWith('es') ? 'es' : 'en');
   setLang(lang);
+  setTheme(store.get('theme', DEFAULT_THEME));
   setSoundEnabled(store.get('sound', true));
   $('#btn-sound').textContent = soundEnabled() ? '🔊' : '🔇';
   $('#input-name').value = store.get('name', '');

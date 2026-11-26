@@ -6,13 +6,22 @@ Es una web app (PWA): se abre en Safari y se instala en la pantalla de inicio co
 
 ## Cómo se juega
 
-- Tablero de 5×5. Cada equipo (Ámbar y Cobalto) tiene **1 Núcleo** y **4 Átomos**.
-- Hay 16 cartas de movimiento (Protón, Fotón, Quark, Gluón…). En cada partida se usan 6: 2 para cada jugador y 2 en el **Flujo**.
+- Tablero de 5×5. Cada equipo tiene **1 pieza líder** y **4 piezas normales**.
+- Hay 16 cartas de movimiento. En cada partida se usan 6: 2 para cada jugador y 2 en el centro (el **Crisol**, o el **Flujo** en el tema Átomos).
 - En tu turno usas una de tus cartas para mover una pieza. Si caes sobre una pieza rival, la capturas.
-- **Draft del Flujo:** la carta que usaste va al Flujo y te quedas con una de las 2 que había allí. Tu rival puede llevarse la carta que acabas de usar.
-- **Ganas por Fisión** (capturas el Núcleo rival) **o por Fusión** (tu Núcleo empieza 2 de tus turnos seguidos en el Reactor, la casilla central).
+- **Draft:** la carta que usaste va al centro y te quedas con una de las 2 que había allí. Tu rival puede llevarse la carta que acabas de usar.
+- **Ganas de dos formas:** capturando la pieza líder rival, o si tu líder empieza 2 de tus turnos seguidos en la casilla central.
 
 Las reglas completas están dentro de la app, en «Cómo jugar».
+
+## Temas
+
+El tema solo cambia el aspecto; las reglas son las mismas. Se elige en la pantalla de inicio o en el menú de la partida. En online cada jugador ve el tema que haya elegido.
+
+- **Medianoche** (por defecto): la Casa del Sol contra la Casa de la Luna. Cada una tiene un Alquimista y 4 Gólems, y se disputan el Atanor, el horno alquímico del centro. Las cartas llevan los nombres de los metales y elementos de la alquimia clásica (Oro ☉, Plata ☽, Mercurio ☿, Fuego △…). Se gana por Captura o por Transmutación.
+- **Átomos**: Ámbar contra Cobalto, con Núcleos, Átomos, el Reactor y cartas de partículas. Se gana por Fisión o por Fusión.
+
+Los temas están en `public/js/themes.js`: nombres, textos, piezas (SVG) y cartas. Los colores y el estilo, en `public/style.css` (sección «Theme: Midnight Alchemy»).
 
 ## Ponerlo online (gratis, ~5 minutos)
 
@@ -64,6 +73,7 @@ Para probar desde el iPhone en tu misma red Wi-Fi, abre `http://IP-de-tu-ordenad
 | `public/js/ai.js` | IA (búsqueda alfa-beta) con 3 dificultades; corre en un Web Worker |
 | `public/js/app.js` | Pantallas, tablero, gestos y conexión online |
 | `public/js/i18n.js` | Textos en español e inglés |
+| `public/js/themes.js` | Temas visuales (Medianoche y Átomos) |
 | `server/index.js` | Servidor web + salas online por WebSocket (valida cada jugada) |
 | `scripts/selfplay.mjs` | La IA juega contra sí misma para revisar el equilibrio |
 | `scripts/make-icons.cjs` | Genera los iconos PNG a partir de `scripts/icon.svg` |

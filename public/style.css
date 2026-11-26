@@ -14,6 +14,18 @@
   --ok: #3ddc97;
   --cell: rgba(255, 255, 255, 0.045);
   --cell-alt: rgba(255, 255, 255, 0.075);
+  --bg-glow: #1c2150;
+  --card-a: #1d2247;
+  --card-b: #12152c;
+  --board-a: #191d3f;
+  --board-b: #0f1229;
+  --surface: #1d2247;
+  --sheet: #151938;
+  --toast: #252a57;
+  --primary-a: #7c4dff;
+  --primary-b: #4cc9f0;
+  --primary-glow: rgba(124, 77, 255, 0.35);
+  --display: -apple-system, BlinkMacSystemFont, "SF Pro Rounded", "Segoe UI", Roboto, sans-serif;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --board: min(94vw, 440px, calc(100vh - 330px - var(--safe-top) - var(--safe-bottom)));
@@ -27,7 +39,7 @@
 [hidden] { display: none !important; }
 html, body { margin: 0; height: 100%; }
 body {
-  background: radial-gradient(120% 80% at 50% 0%, #1c2150 0%, var(--bg) 60%) fixed, var(--bg);
+  background: radial-gradient(120% 80% at 50% 0%, var(--bg-glow) 0%, var(--bg) 60%) fixed, var(--bg);
   color: var(--text);
   font: 16px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Rounded", "Segoe UI", Roboto, sans-serif;
   overscroll-behavior: none;
@@ -63,7 +75,7 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulat
 .orbiter { transform-origin: 60px 60px; animation: spin 2.4s linear infinite reverse; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .title {
-  margin: 0; text-align: center; font-size: 44px; letter-spacing: 0.14em; font-weight: 800;
+  margin: 0; text-align: center; font-size: 44px; letter-spacing: 0.14em; font-weight: 800; font-family: var(--display);
   background: linear-gradient(90deg, var(--p0), #fff 45%, var(--p1));
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
@@ -87,8 +99,8 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulat
 }
 .btn:active { transform: scale(0.97); }
 .btn.primary {
-  background: linear-gradient(135deg, #7c4dff, #4cc9f0); border: none; color: #fff;
-  box-shadow: 0 6px 24px rgba(124, 77, 255, 0.35);
+  background: linear-gradient(135deg, var(--primary-a), var(--primary-b)); border: none; color: #fff;
+  box-shadow: 0 6px 24px var(--primary-glow);
 }
 .btn.ghost { background: transparent; }
 .btn[disabled] { opacity: 0.5; pointer-events: none; }
@@ -144,7 +156,7 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulat
   --team: #c9cbe0; --team-glow: rgba(255, 255, 255, 0.25);
   position: relative; display: flex; align-items: center; gap: 8px;
   padding: 7px 10px 7px 7px; border-radius: 14px;
-  background: linear-gradient(160deg, #1d2247, #12152c);
+  background: linear-gradient(160deg, var(--card-a), var(--card-b));
   border: 1.5px solid var(--panel-border);
   transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.2s;
   min-width: 0;
@@ -172,7 +184,7 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulat
 .board {
   position: relative; width: var(--board); height: var(--board);
   border-radius: 18px; padding: 6px;
-  background: linear-gradient(145deg, #191d3f, #0f1229);
+  background: linear-gradient(145deg, var(--board-a), var(--board-b));
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 14px 40px rgba(0, 0, 0, 0.5);
 }
 .cells, .pieces { position: absolute; inset: 6px; }
@@ -211,8 +223,8 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulat
   box-shadow: 0 0 14px var(--team-glow), inset 0 -3px 6px rgba(0, 0, 0, 0.35);
 }
 .piece.core .orb { width: 46%; height: 46%; }
-.piece.core svg { position: absolute; inset: 6%; width: 88%; height: 88%; overflow: visible; }
-.piece.core svg ellipse { fill: none; stroke: var(--team); stroke-width: 2.2; opacity: 0.85; }
+.piece.core svg.orbits { position: absolute; inset: 6%; width: 88%; height: 88%; overflow: visible; }
+.piece.core svg.orbits ellipse { fill: none; stroke: var(--team); stroke-width: 2.2; opacity: 0.85; }
 .piece.core svg .spin { transform-origin: 50px 50px; animation: spin 6s linear infinite; }
 .piece.selected .orb { outline: 3px solid #fff; outline-offset: 3px; }
 .piece.dying { opacity: 0; transform: translate(calc(var(--x) * (100% + 3px)), calc(var(--y) * (100% + 3px))) scale(1.6); }
@@ -226,7 +238,7 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulat
 .emote-pop.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 .emote-tray {
   position: fixed; left: 50%; bottom: calc(var(--safe-bottom) + 20px); transform: translateX(-50%);
-  display: flex; gap: 6px; padding: 8px; border-radius: 18px; background: #1d2247; border: 1px solid var(--panel-border);
+  display: flex; gap: 6px; padding: 8px; border-radius: 18px; background: var(--surface); border: 1px solid var(--panel-border);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); z-index: 30;
 }
 .emote-tray button { font-size: 28px; width: 48px; height: 48px; border: none; background: transparent; border-radius: 12px; }
@@ -241,7 +253,7 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulat
 .overlay[hidden] { display: none; }
 .sheet {
   width: 100%; max-width: 520px; max-height: 88vh; display: flex; flex-direction: column;
-  background: #151938; border: 1px solid var(--panel-border); border-bottom: none;
+  background: var(--sheet); border: 1px solid var(--panel-border); border-bottom: none;
   border-radius: 24px 24px 0 0; padding: 14px 16px calc(var(--safe-bottom) + 16px);
 }
 .sheet.small { gap: 10px; }
@@ -261,7 +273,7 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulat
 
 .toast {
   position: fixed; left: 50%; top: calc(var(--safe-top) + 12px); transform: translateX(-50%);
-  z-index: 60; background: #252a57; border: 1px solid var(--panel-border); border-radius: 14px;
+  z-index: 60; background: var(--toast); border: 1px solid var(--panel-border); border-radius: 14px;
   padding: 10px 16px; font-size: 15px; max-width: 90vw; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
@@ -277,3 +289,92 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulat
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------- Theme picker ---------- */
+.theme-pick { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--muted); font-size: 14px; flex-wrap: wrap; }
+.theme-pick .chip[aria-pressed="true"] { border-color: var(--p0); color: var(--text); box-shadow: 0 0 0 1px var(--p0); }
+.rules .lore { font-style: italic; color: var(--muted); margin: 4px 0 0; }
+
+/* =========================================================
+   Theme: Midnight Alchemy (Sun house vs Moon house)
+   ========================================================= */
+body.theme-alchemy {
+  --bg: #07070f;
+  --bg2: #15131f;
+  --bg-glow: #1a1832;
+  --panel: rgba(242, 193, 78, 0.05);
+  --panel-border: rgba(242, 193, 78, 0.16);
+  --text: #f3eee2;
+  --muted: #a8a3b8;
+  --p0: #f2c14e; /* Sol */
+  --p0-glow: rgba(242, 193, 78, 0.55);
+  --p1: #a9c6ff; /* Luna */
+  --p1-glow: rgba(169, 198, 255, 0.55);
+  --reactor: #ff8a4c; /* Atanor fire */
+  --cell: rgba(255, 255, 255, 0.035);
+  --cell-alt: rgba(255, 255, 255, 0.06);
+  --card-a: #1f1b28;
+  --card-b: #121018;
+  --board-a: #1a1722;
+  --board-b: #0b0a10;
+  --surface: #1b1824;
+  --sheet: #14121c;
+  --toast: #262132;
+  --primary-a: #b8861b;
+  --primary-b: #f2c14e;
+  --primary-glow: rgba(242, 193, 78, 0.3);
+  --display: "Cinzel", "Trajan Pro", "Times New Roman", serif;
+  background:
+    radial-gradient(circle at 84% 7%, rgba(214, 226, 255, 0.22) 0, rgba(214, 226, 255, 0.06) 9%, transparent 22%),
+    radial-gradient(1.2px 1.2px at 13px 17px, rgba(255, 255, 255, 0.75) 50%, transparent 52%) 0 0 / 97px 89px,
+    radial-gradient(1px 1px at 61px 43px, rgba(255, 255, 255, 0.55) 50%, transparent 52%) 0 0 / 131px 113px,
+    radial-gradient(1.4px 1.4px at 37px 71px, rgba(255, 236, 200, 0.6) 50%, transparent 52%) 0 0 / 173px 157px,
+    linear-gradient(to top, rgba(120, 110, 160, 0.16), transparent 35%),
+    linear-gradient(#10102a, #07070f 70%);
+  background-attachment: fixed;
+}
+.theme-alchemy .logo-atom { filter: drop-shadow(0 0 16px rgba(242, 193, 78, 0.35)); animation-duration: 60s; }
+.theme-alchemy .title { letter-spacing: 0.1em; background: linear-gradient(90deg, var(--p0), #fff6dc 50%, var(--p1)); -webkit-background-clip: text; background-clip: text; }
+.theme-alchemy .tagline { font-family: var(--display); letter-spacing: 0.04em; }
+.theme-alchemy .bar h2, .theme-alchemy .sheet-head h2, .theme-alchemy .end h2, .theme-alchemy .rules h3 { font-family: var(--display); letter-spacing: 0.03em; }
+.theme-alchemy .btn.primary { color: #1a1206; }
+.theme-alchemy .room-code { font-family: var(--display); text-shadow: 0 0 22px rgba(242, 193, 78, 0.6); }
+.theme-alchemy .spinner { border-top-color: var(--p0); }
+.theme-alchemy .badge { background: rgba(255, 138, 76, 0.18); color: #ffc7a6; }
+.theme-alchemy .flux-label { font-family: var(--display); letter-spacing: 0.12em; }
+
+/* cards: dark vellum with a gilt edge */
+.theme-alchemy .card { border-radius: 10px; box-shadow: inset 0 0 0 1px rgba(242, 193, 78, 0.08); }
+.theme-alchemy .card .mini i { border-radius: 1px; }
+.theme-alchemy .card .mini i.me { border-radius: 50%; background: #f3eee2; }
+.theme-alchemy .card .mini i.go { border-radius: 2px; transform: rotate(45deg) scale(0.78); }
+.theme-alchemy .card .sym { font-family: "Times New Roman", serif; font-weight: 700; }
+.theme-alchemy .card .cname { font-family: var(--display); letter-spacing: 0.02em; }
+.theme-alchemy .card.pick { border-color: var(--reactor); }
+
+/* board: obsidian flagstones, the Atanor burns in the centre */
+.theme-alchemy .board { border-radius: 12px; box-shadow: inset 0 0 0 1px rgba(242, 193, 78, 0.18), 0 0 0 4px #0d0b13, 0 0 0 5px rgba(242, 193, 78, 0.25), 0 18px 40px rgba(0, 0, 0, 0.6); }
+.theme-alchemy .cell { border-radius: 4px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), inset 0 -2px 0 rgba(0, 0, 0, 0.35); }
+.theme-alchemy .cell.reactor { background: radial-gradient(circle, rgba(255, 138, 76, 0.32), rgba(255, 90, 40, 0.06) 72%); }
+.theme-alchemy .cell.reactor::before {
+  inset: 8%; border: none; border-radius: 0; animation: spin 40s linear infinite;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='%23ff8a4c' stroke-width='2.5'%3E%3Ccircle cx='50' cy='50' r='46' stroke-dasharray='3 5'/%3E%3Ccircle cx='50' cy='50' r='38'/%3E%3Cpolygon points='50,12 82.9,69 17.1,69'/%3E%3Ccircle cx='50' cy='50' r='19'/%3E%3C/svg%3E") center / contain no-repeat;
+  opacity: 0.75;
+}
+.theme-alchemy .cell.reactor.charged::before { opacity: 1; box-shadow: none; filter: drop-shadow(0 0 6px #ff8a4c); animation-duration: 6s; }
+.theme-alchemy .cell.last { box-shadow: inset 0 0 0 2px rgba(242, 193, 78, 0.28); }
+
+/* pieces: golem stones and alchemist seals */
+.piece .tok { width: 78%; height: 78%; overflow: visible; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 7px var(--team-glow)); }
+.piece .tok.lead { width: 92%; height: 92%; }
+.piece .tok .stone { fill: color-mix(in srgb, var(--team) 22%, #17151f); stroke: var(--team); stroke-width: 3; }
+.piece .tok .rim { fill: none; stroke: color-mix(in srgb, var(--team) 45%, transparent); stroke-width: 1.5; }
+.piece .tok .disc { fill: color-mix(in srgb, var(--team) 18%, #100e16); stroke: var(--team); stroke-width: 3.5; }
+.piece .tok .line { fill: none; stroke: var(--team); stroke-width: 2.2; opacity: 0.85; }
+.piece .tok .seal { transform-origin: 50px 50px; animation: spin 24s linear infinite; }
+.piece .tok .glyph { fill: var(--team); font: 700 34px "Times New Roman", serif; text-anchor: middle; dominant-baseline: central; }
+.piece .tok .glyph.small { font-size: 30px; }
+.piece.selected .tok { outline: none; filter: drop-shadow(0 0 0 #fff) drop-shadow(0 0 3px #fff) drop-shadow(0 0 10px var(--team-glow)); }
+.piece.fusing .tok .disc { animation: forge 0.9s ease-in-out infinite; }
+@keyframes forge { 50% { fill: color-mix(in srgb, #ff8a4c 45%, #100e16); } }
+.theme-alchemy .status.mine { color: #f6dc9a; }
