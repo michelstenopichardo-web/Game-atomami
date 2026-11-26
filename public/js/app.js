@@ -1,7 +1,7 @@
 // Atomami — app controller (screens, board UI, AI and online play).
-import { newGame, legalMoves, applyMove, resign, targetsFor, pieceAt, sameMove, CARDS, CARD_IDS, REACTOR, SIZE } from './game.js';
+import { newGame, legalMoves, applyMove, resign, targetsFor, pieceAt, sameMove, CARDS, CARD_IDS, GATES, SIZE } from './game.js';
 import { t, setLang, getLang, setThemeVars } from './i18n.js';
-import { THEMES, THEME_IDS, DEFAULT_THEME, setTheme, theme, cardLabel } from './themes.js';
+import { THEMES, THEME_IDS, DEFAULT_THEME, setTheme, theme, cardLabel, pieceName } from './themes.js';
 import { play, unlockAudio, setSoundEnabled, soundEnabled } from './sound.js';
 import { chooseMove } from './ai.js';
 
@@ -40,7 +40,7 @@ const app = {
   names: ['', ''],
   aiBusy: false,
   viewing: false,
-  ui: { card: null, piece: null, pending: null, chooseCard: null },
+  ui: { card: null, piece: null, chooseCard: null },
   online: {
     ws: null,
     connected: false,
@@ -226,20 +226,20 @@ function buildBoard() {
 function renderPieces() {
   const g = app.game;
   const alive = new Set();
+  const targets = currentTargets();
   for (const p of g.pieces) {
     alive.add(p.id);
     let el = pieceEls.get(p.id);
     if (!el) {
       el = document.createElement('div');
-      el.innerHTML = theme().piece(p.kind, p.owner);
+      el.innerHTML = theme().piece(p);
       $('#pieces').appendChild(el);
       pieceEls.set(p.id, el);
     }
     const s = toScreen(p.x, p.y);
     el.style.setProperty('--x', s.x);
     el.style.setProperty('--y', s.y);
-    const onReactor = p.kind === 'core' && p.x === REACTOR.x && p.y === REACTOR.y;
-    el.className = `piece ${p.kind} team${p.owner}` + (app.ui.piece === p.id ? ' selected' : '') + (onReactor ? ' fusing' : '');
+    el.className = `piece ${p.kind} team${p.owner}` + (app.ui.piece === p.id ? ' selected' : '') + (targets.get(`${p.x},${p.y}`)?.capture ? ' capturable' : '');
   }
   for (const [id, el] of pieceEls) {
     if (alive.has(id) || el.classList.contains('dying')) continue;
@@ -271,7 +271,6 @@ function renderCells() {
   const g = app.game;
   const targets = currentTargets();
   const last = g.lastMove;
-  const charged = g.fusion[0] > 0 || g.fusion[1] > 0;
   const turnTeam = 'team' + g.turn;
   for (const c of cellEls) {
     const sx = +c.dataset.sx;
@@ -280,9 +279,8 @@ function renderCells() {
     const k = `${b.x},${b.y}`;
     const cls = ['cell'];
     if ((sx + sy) % 2) cls.push('alt');
-    if (b.x === REACTOR.x && b.y === REACTOR.y) {
-      cls.push('reactor');
-      if (charged) cls.push('charged');
+    for (const owner of [0, 1]) {
+      if (b.x === GATES[owner].x && b.y === GATES[owner].y) cls.push('gate', 'gate' + owner);
     }
     if (last && !last.pass && ((last.from.x === b.x && last.from.y === b.y) || (last.to.x === b.x && last.to.y === b.y))) cls.push('last');
     const tg = targets.get(k);
@@ -291,14 +289,14 @@ function renderCells() {
       if (tg.capture) cls.push('capture');
       else if (tg.count > 1 && !app.ui.card) cls.push('both');
     }
-    const pend = app.ui.pending || app.ui.chooseCard;
-    if (pend && pend.to && pend.to.x === b.x && pend.to.y === b.y) cls.push('pending');
+    const pend = app.ui.chooseCard;
+    if (pend && pend.to.x === b.x && pend.to.y === b.y) cls.push('pending');
     c.className = cls.join(' ');
   }
 }
 
 function renderHand(container, cards, { seat, view, key, playable }) {
-  const sig = cards.join(',') + '|' + view + '|' + getLang();
+  const sig = cards.join(',') + '|' + view + '|' + getLang() + '|' + seat;
   const fresh = lastHands[key] && lastHands[key] !== sig ? cards.filter((c) => !lastHands[key].split('|')[0].split(',').includes(c)) : [];
   if (lastHands[key] !== sig) {
     container.innerHTML = '';
@@ -312,9 +310,8 @@ function renderHand(container, cards, { seat, view, key, playable }) {
   for (const el of container.children) {
     const c = el.dataset.card;
     el.classList.toggle('playable', !!playable);
-    el.classList.toggle('selected', !!playable && (app.ui.card === c || app.ui.pending?.card === c));
+    el.classList.toggle('selected', !!playable && app.ui.card === c);
     el.classList.toggle('pick', !!playable && !!app.ui.chooseCard && targetsFor(app.game, app.ui.chooseCard.piece, c).some((tg) => tg.x === app.ui.chooseCard.to.x && tg.y === app.ui.chooseCard.to.y));
-    el.classList.toggle('dim', !!playable && !!app.ui.pending && app.ui.pending.card !== c);
   }
 }
 
@@ -328,9 +325,6 @@ function renderPanels() {
     const panel = $('#panel-' + pos);
     panel.className = `player ${pos} team${seat}` + (g.winner === null && g.turn === seat ? ' turn' : '') + (local && pos === 'top' ? ' rot' : '');
     panel.querySelector('.name').textContent = app.names[seat] || '—';
-    const fb = panel.querySelector('.badge.fusion');
-    fb.hidden = !(g.fusion[seat] > 0);
-    fb.textContent = t('fusionBadge', { n: g.fusion[seat] });
     const off = panel.querySelector('.badge.off');
     off.hidden = !(app.mode === 'online' && app.online.players[seat] && !app.online.players[seat].online);
     const playable = local ? isMyTurn() && g.turn === seat : isMyTurn() && seat === app.me;
@@ -340,8 +334,9 @@ function renderPanels() {
   const flux = $('#flux');
   const rotFlux = local && g.turn === topSeat() && g.winner === null;
   flux.classList.toggle('rot', rotFlux);
-  renderHand(flux, g.flux, { seat: null, view: 'up', key: 'flux', playable: false });
-  for (const el of flux.children) el.classList.toggle('pick', !!app.ui.pending && isMyTurn());
+  // The side card goes to whoever moves now, so draw it from their side of the table.
+  const sideView = local || g.turn === bottomSeat() ? 'up' : 'down';
+  renderHand(flux, [g.side], { seat: g.winner === null ? g.turn : null, view: sideView, key: 'flux', playable: false });
 }
 
 function statusText() {
@@ -350,9 +345,11 @@ function statusText() {
   if (app.mode === 'online' && !app.online.connected) return { text: t('reconnecting'), cls: 'wait' };
   if (app.mode === 'online' && !app.online.players[1 - app.me]) return { text: t('waitingOpponent'), cls: 'wait' };
   if (isMyTurn()) {
-    if (app.ui.pending) return { text: t('pickFlux'), cls: 'mine' };
     if (app.ui.chooseCard) return { text: t('pickCard'), cls: 'mine' };
     if (mustPass()) return { text: t('mustPass'), cls: 'mine' };
+    const sel = app.ui.piece && g.pieces.find((p) => p.id === app.ui.piece);
+    const who = sel && pieceName(sel, getLang());
+    if (who) return { text: t('pickTarget', { name: who }), cls: 'mine' };
     return { text: app.mode === 'local' ? t('yourTurnLocal', { name: app.names[g.turn] }) : t('yourTurn'), cls: 'mine' };
   }
   if (app.mode === 'ai') return { text: t('aiThinking'), cls: 'wait' };
@@ -374,17 +371,14 @@ function render() {
 
 // ---------------- input ----------------
 function resetUi() {
-  app.ui = { card: null, piece: null, pending: null, chooseCard: null };
+  app.ui = { card: null, piece: null, chooseCard: null };
 }
 
 function onCellTap(sx, sy) {
   if (!isMyTurn()) return;
   const g = app.game;
   const b = toScreen(sx, sy);
-  if (app.ui.pending || app.ui.chooseCard) {
-    app.ui.pending = null;
-    app.ui.chooseCard = null;
-  }
+  app.ui.chooseCard = null;
   const piece = pieceAt(g, b.x, b.y);
   if (piece && piece.owner === g.turn) {
     app.ui.piece = app.ui.piece === piece.id ? null : piece.id;
@@ -398,7 +392,7 @@ function onCellTap(sx, sy) {
   if (matching.length === 0) {
     app.ui.piece = null;
   } else if (matching.length === 1) {
-    startPending({ card: matching[0], piece: app.ui.piece, to: b });
+    commit({ card: matching[0], piece: app.ui.piece, to: b });
     return;
   } else {
     app.ui.chooseCard = { piece: app.ui.piece, to: b };
@@ -406,39 +400,21 @@ function onCellTap(sx, sy) {
   render();
 }
 
-function startPending(move) {
-  app.ui.pending = move;
-  app.ui.chooseCard = null;
-  play('card');
-  render();
-}
-
 function onHandTap(seat, card) {
   const g = app.game;
   if (!isMyTurn() || seat !== g.turn) return;
   if (mustPass()) {
-    startPending({ card, pass: true });
+    commit({ card, pass: true });
     return;
   }
   if (app.ui.chooseCard) {
     const { piece, to } = app.ui.chooseCard;
-    if (targetsFor(g, piece, card).some((tg) => tg.x === to.x && tg.y === to.y)) startPending({ card, piece, to });
+    if (targetsFor(g, piece, card).some((tg) => tg.x === to.x && tg.y === to.y)) commit({ card, piece, to });
     return;
   }
-  app.ui.pending = null;
   app.ui.card = app.ui.card === card ? null : card;
   play('select');
   render();
-}
-
-function onFluxTap(card) {
-  if (!isMyTurn()) return;
-  if (!app.ui.pending) {
-    toast(t('yourTurn'));
-    return;
-  }
-  const move = { ...app.ui.pending, take: card };
-  commit(move);
 }
 
 function commit(move) {
@@ -471,7 +447,6 @@ function setGame(next, { fresh = false } = {}) {
     const lm = next.lastMove;
     if (lm?.captured) play('capture');
     else play('move');
-    if (next.fusion.some((f, i) => f > (prev.fusion[i] || 0)) && next.winner === null) setTimeout(() => play('fusion'), 150);
   }
   render();
   if (next.winner !== null && (!prev || prev.winner === null || fresh)) {
@@ -561,7 +536,13 @@ function showEnd() {
   const won = app.mode !== 'local' && g.winner === app.me;
   const lost = app.mode !== 'local' && g.winner !== 'draw' && g.winner !== app.me;
   $('#end-title').textContent = endTitle();
+  const terms = theme().terms[getLang()] || theme().terms.es;
   let reason = t('reason_' + g.reason);
+  if (g.winner === 0 || g.winner === 1) {
+    const loser = 1 - g.winner;
+    if (g.reason === 'capture') reason = t('reason_capture', { fallen: terms.leaders[loser] });
+    if (g.reason === 'gate') reason = t('reason_gate', { arrived: terms.leaders[g.winner], gate: terms.gates[loser] });
+  }
   if (g.reason === 'resign') {
     if (app.mode === 'local') reason = t('reason_resign_name', { name: app.names[1 - g.winner] });
     else reason = g.winner === app.me ? t('reason_resign_them') : t('reason_resign_you');
@@ -983,10 +964,6 @@ function wire() {
   $('#hand-top').addEventListener('click', (e) => {
     const card = e.target.closest('.card');
     if (card && app.mode === 'local') onHandTap(topSeat(), card.dataset.card);
-  });
-  $('#flux').addEventListener('click', (e) => {
-    const card = e.target.closest('.card');
-    if (card) onFluxTap(card.dataset.card);
   });
   $('#status').addEventListener('click', () => {
     if (app.game && app.game.winner !== null) {

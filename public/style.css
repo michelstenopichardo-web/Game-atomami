@@ -71,6 +71,8 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulat
   border-radius: 999px; padding: 6px 12px; font-size: 14px; min-width: 44px; min-height: 36px;
 }
 .logo { display: flex; justify-content: center; margin-top: 4px; }
+.logo-atom.still { animation: none; }
+.logo-atom.slow { animation-duration: 60s; }
 .logo-atom { width: 132px; height: 132px; filter: drop-shadow(0 0 18px rgba(179, 136, 255, 0.45)); animation: spin 18s linear infinite; }
 .orbiter { transform-origin: 60px 60px; animation: spin 2.4s linear infinite reverse; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -193,12 +195,13 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulat
 .cell.alt { background: var(--cell-alt); }
 .cell.home0 { box-shadow: inset 0 -3px 0 rgba(255, 176, 46, 0.25); }
 .cell.home1 { box-shadow: inset 0 3px 0 rgba(76, 201, 240, 0.25); }
-.cell.reactor { background: radial-gradient(circle, rgba(179, 136, 255, 0.35), rgba(179, 136, 255, 0.08) 70%); }
-.cell.reactor::before {
-  content: ""; position: absolute; inset: 14%; border-radius: 50%;
-  border: 2px dashed rgba(179, 136, 255, 0.6); animation: spin 12s linear infinite;
+.cell.gate0 { --gate: var(--p0); }
+.cell.gate1 { --gate: var(--p1); }
+.cell.gate { background: radial-gradient(circle, color-mix(in srgb, var(--gate) 20%, transparent), transparent 72%), var(--cell); }
+.cell.gate::before {
+  content: ""; position: absolute; inset: 12%; border-radius: 50%;
+  border: 2px dashed color-mix(in srgb, var(--gate) 70%, transparent);
 }
-.cell.reactor.charged::before { border-color: var(--reactor); border-style: solid; box-shadow: 0 0 20px var(--reactor); }
 .cell.last { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.18); }
 .cell.target::after {
   content: ""; position: absolute; left: 50%; top: 50%; width: 30%; height: 30%;
@@ -228,8 +231,6 @@ button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulat
 .piece.core svg .spin { transform-origin: 50px 50px; animation: spin 6s linear infinite; }
 .piece.selected .orb { outline: 3px solid #fff; outline-offset: 3px; }
 .piece.dying { opacity: 0; transform: translate(calc(var(--x) * (100% + 3px)), calc(var(--y) * (100% + 3px))) scale(1.6); }
-.piece.fusing .orb { animation: fuse 0.9s ease-in-out infinite; }
-@keyframes fuse { 50% { box-shadow: 0 0 30px 8px var(--reactor); } }
 
 .emote-pop {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(0.5);
@@ -333,7 +334,7 @@ body.theme-alchemy {
     linear-gradient(#10102a, #07070f 70%);
   background-attachment: fixed;
 }
-.theme-alchemy .logo-atom { filter: drop-shadow(0 0 16px rgba(242, 193, 78, 0.35)); animation-duration: 60s; }
+.theme-alchemy .logo-atom { filter: drop-shadow(0 0 16px rgba(242, 193, 78, 0.35)); }
 .theme-alchemy .title { letter-spacing: 0.1em; background: linear-gradient(90deg, var(--p0), #fff6dc 50%, var(--p1)); -webkit-background-clip: text; background-clip: text; }
 .theme-alchemy .tagline { font-family: var(--display); letter-spacing: 0.04em; }
 .theme-alchemy .bar h2, .theme-alchemy .sheet-head h2, .theme-alchemy .end h2, .theme-alchemy .rules h3 { font-family: var(--display); letter-spacing: 0.03em; }
@@ -355,13 +356,6 @@ body.theme-alchemy {
 /* board: obsidian flagstones, the Atanor burns in the centre */
 .theme-alchemy .board { border-radius: 12px; box-shadow: inset 0 0 0 1px rgba(242, 193, 78, 0.18), 0 0 0 4px #0d0b13, 0 0 0 5px rgba(242, 193, 78, 0.25), 0 18px 40px rgba(0, 0, 0, 0.6); }
 .theme-alchemy .cell { border-radius: 4px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), inset 0 -2px 0 rgba(0, 0, 0, 0.35); }
-.theme-alchemy .cell.reactor { background: radial-gradient(circle, rgba(255, 138, 76, 0.32), rgba(255, 90, 40, 0.06) 72%); }
-.theme-alchemy .cell.reactor::before {
-  inset: 8%; border: none; border-radius: 0; animation: spin 40s linear infinite;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='%23ff8a4c' stroke-width='2.5'%3E%3Ccircle cx='50' cy='50' r='46' stroke-dasharray='3 5'/%3E%3Ccircle cx='50' cy='50' r='38'/%3E%3Cpolygon points='50,12 82.9,69 17.1,69'/%3E%3Ccircle cx='50' cy='50' r='19'/%3E%3C/svg%3E") center / contain no-repeat;
-  opacity: 0.75;
-}
-.theme-alchemy .cell.reactor.charged::before { opacity: 1; box-shadow: none; filter: drop-shadow(0 0 6px #ff8a4c); animation-duration: 6s; }
 .theme-alchemy .cell.last { box-shadow: inset 0 0 0 2px rgba(242, 193, 78, 0.28); }
 
 /* pieces: golem stones and alchemist seals */
@@ -375,6 +369,106 @@ body.theme-alchemy {
 .piece .tok .glyph { fill: var(--team); font: 700 34px "Times New Roman", serif; text-anchor: middle; dominant-baseline: central; }
 .piece .tok .glyph.small { font-size: 30px; }
 .piece.selected .tok { outline: none; filter: drop-shadow(0 0 0 #fff) drop-shadow(0 0 3px #fff) drop-shadow(0 0 10px var(--team-glow)); }
-.piece.fusing .tok .disc { animation: forge 0.9s ease-in-out infinite; }
-@keyframes forge { 50% { fill: color-mix(in srgb, #ff8a4c 45%, #100e16); } }
 .theme-alchemy .status.mine { color: #f6dc9a; }
+
+/* alchemy gates: a tower seal */
+.theme-alchemy .cell.gate::before { border-style: solid; border-width: 1.5px; inset: 10%; box-shadow: inset 0 0 0 4px color-mix(in srgb, var(--gate) 14%, transparent); }
+
+/* =========================================================
+   Theme: Mistborn (unofficial fan theme, personal use)
+   The Crew (mist silver) vs the Final Empire (crimson)
+   ========================================================= */
+body.theme-mistborn {
+  --bg: #0b0b0d;
+  --bg2: #17171b;
+  --bg-glow: #2a1414;
+  --panel: rgba(220, 226, 235, 0.05);
+  --panel-border: rgba(220, 226, 235, 0.13);
+  --text: #eceef2;
+  --muted: #a3a6ae;
+  --p0: #dfe9f5; /* the Crew: mist */
+  --p0-glow: rgba(223, 233, 245, 0.5);
+  --p1: #e0414a; /* the Empire: crimson */
+  --p1-glow: rgba(224, 65, 74, 0.5);
+  --reactor: #e0414a;
+  --cell: rgba(255, 255, 255, 0.04);
+  --cell-alt: rgba(255, 255, 255, 0.065);
+  --card-a: #1d1d22;
+  --card-b: #111114;
+  --board-a: #1b1b20;
+  --board-b: #0c0c0f;
+  --surface: #1a1a1f;
+  --sheet: #141418;
+  --toast: #24242a;
+  --primary-a: #8e1b22;
+  --primary-b: #d63a43;
+  --primary-glow: rgba(214, 58, 67, 0.32);
+  --ok: #e9eef5;
+  --display: "Cinzel", "Trajan Pro", "Times New Roman", serif;
+  background:
+    radial-gradient(ellipse 90% 45% at 50% -8%, rgba(196, 38, 31, 0.32), transparent 70%),
+    radial-gradient(1.4px 1.4px at 17px 23px, rgba(190, 190, 195, 0.5) 50%, transparent 55%) 0 0 / 83px 71px,
+    radial-gradient(1.1px 1.1px at 55px 9px, rgba(160, 160, 165, 0.45) 50%, transparent 55%) 0 0 / 127px 109px,
+    radial-gradient(1.8px 1.8px at 31px 61px, rgba(120, 120, 125, 0.45) 50%, transparent 55%) 0 0 / 151px 139px,
+    linear-gradient(#18181d, #0b0b0d 72%);
+  background-attachment: fixed;
+}
+/* drifting mist behind everything */
+body.theme-mistborn::before {
+  content: ""; position: fixed; inset: -20% -40%; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(ellipse 38% 12% at 30% 72%, rgba(230, 236, 245, 0.10), transparent 70%),
+    radial-gradient(ellipse 45% 10% at 70% 58%, rgba(230, 236, 245, 0.08), transparent 70%),
+    radial-gradient(ellipse 40% 14% at 45% 88%, rgba(230, 236, 245, 0.12), transparent 70%),
+    radial-gradient(ellipse 35% 9% at 60% 30%, rgba(230, 236, 245, 0.05), transparent 70%);
+  animation: mist 38s ease-in-out infinite alternate;
+}
+@keyframes mist { from { transform: translateX(-6%); } to { transform: translateX(6%); } }
+.theme-mistborn .logo-atom { filter: drop-shadow(0 0 18px rgba(196, 38, 31, 0.45)); }
+.theme-mistborn .mist-band { animation: band 9s ease-in-out infinite alternate; }
+.theme-mistborn .mist-band.b2 { animation-duration: 12s; }
+.theme-mistborn .mist-band.b3 { animation-duration: 7s; }
+@keyframes band { to { transform: translateX(6px); } }
+.theme-mistborn .title { letter-spacing: 0.1em; background: linear-gradient(90deg, #f1f4f8, #c9ced8 55%, #e0414a); -webkit-background-clip: text; background-clip: text; }
+.theme-mistborn .tagline { font-family: var(--display); letter-spacing: 0.03em; font-size: 15px; }
+.theme-mistborn .bar h2, .theme-mistborn .sheet-head h2, .theme-mistborn .end h2, .theme-mistborn .rules h3 { font-family: var(--display); letter-spacing: 0.03em; }
+.theme-mistborn .rules h3 { color: #e0414a; }
+.theme-mistborn .room-code { font-family: var(--display); text-shadow: 0 0 22px rgba(224, 65, 74, 0.55); }
+.theme-mistborn .spinner { border-top-color: var(--p1); }
+.theme-mistborn .field input:focus { border-color: var(--p0); }
+.theme-mistborn .flux-label { font-family: var(--display); letter-spacing: 0.12em; color: var(--muted); }
+.theme-mistborn .theme-pick .chip[aria-pressed="true"] { border-color: var(--p1); box-shadow: 0 0 0 1px var(--p1); }
+
+/* cards: dark iron plates */
+.theme-mistborn .card { border-radius: 8px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05); }
+.theme-mistborn .card .mini i { border-radius: 1px; }
+.theme-mistborn .card .mini i.me { border-radius: 50%; background: #f1f4f8; }
+.theme-mistborn .card .sym { font-family: var(--display); font-size: calc(var(--s) * 1.5); letter-spacing: 0.02em; }
+.theme-mistborn .card .cname { font-family: var(--display); letter-spacing: 0.02em; }
+
+/* board: ash-grey flagstones */
+.theme-mistborn .board { border-radius: 10px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07), 0 0 0 4px #0e0e11, 0 0 0 5px rgba(224, 65, 74, 0.22), 0 18px 40px rgba(0, 0, 0, 0.65); }
+.theme-mistborn .cell { border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), inset 0 -2px 0 rgba(0, 0, 0, 0.4); }
+.theme-mistborn .cell.last { box-shadow: inset 0 0 0 2px rgba(223, 233, 245, 0.22); }
+/* Kredik Shaw (the Empire's square) gets spires, the Crew's hideout a lantern-lit door */
+.theme-mistborn .cell.gate::before { border: none; border-radius: 0; inset: 14%; opacity: 0.55; background: center / contain no-repeat; }
+.theme-mistborn .cell.gate1::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23e0414a'%3E%3Cpath d='M10 92 L10 60 L16 30 L22 60 L22 92Z M28 92 L28 48 L36 8 L44 48 L44 92Z M50 92 L50 40 L58 18 L66 40 L66 92Z M72 92 L72 56 L79 26 L86 56 L86 92Z'/%3E%3C/svg%3E"); }
+.theme-mistborn .cell.gate0::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='%23dfe9f5' stroke-width='5'%3E%3Cpath d='M22 92 L22 46 Q50 8 78 46 L78 92'/%3E%3Cpath d='M36 92 L36 56 Q50 36 64 56 L64 92'/%3E%3Ccircle cx='50' cy='70' r='4' fill='%23dfe9f5'/%3E%3C/svg%3E"); }
+
+/* pieces: the Crew's coins with initials, the Empire's iron */
+.piece .tok .coin { fill: color-mix(in srgb, var(--team) 14%, #16161a); stroke: var(--team); stroke-width: 3; }
+.piece .tok .glyph.letter { font: 700 36px "Cinzel", "Times New Roman", serif; }
+.piece .tok .glyph.letter.big { font-size: 40px; }
+.piece .tok .ticks line { stroke: var(--team); stroke-width: 3; stroke-linecap: round; opacity: 0.8; }
+.piece .tok .spike { stroke: var(--team); stroke-width: 5; stroke-linecap: round; fill: none; }
+.piece .tok .crown { fill: var(--team); stroke: color-mix(in srgb, var(--team) 60%, #fff); stroke-width: 1.5; stroke-linejoin: round; }
+.theme-mistborn .piece.team1 .tok .stone { fill: #1b1b20; }
+.theme-mistborn .piece.team1 .tok .disc { fill: #1d1012; }
+
+/* a piece you can capture right now: ring drawn above the token */
+.piece.capturable::after {
+  content: ""; position: absolute; inset: 2%; border-radius: 50%;
+  border: 3px solid var(--danger); box-shadow: 0 0 12px var(--danger);
+  animation: blink 1s ease-in-out infinite;
+}
+.theme-mistborn { --danger: #ffcf5a; }

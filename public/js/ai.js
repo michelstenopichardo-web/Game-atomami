@@ -1,64 +1,22 @@
 // Atomami — computer opponent (alpha-beta search with iterative deepening).
-import { legalMoves, applyMove, cardOffsets, REACTOR, FUSION_TURNS } from './game.js';
+import { legalMoves, applyMove, cardOffsets, GATES } from './game.js';
 
 const WIN = 100000;
 
 export const LEVELS = {
   easy: { maxDepth: 1, timeMs: 150, noise: 18 },
   normal: { maxDepth: 3, timeMs: 500, noise: 4 },
-  hard: { maxDepth: 8, timeMs: 1400, noise: 0 },
+  hard: { maxDepth: 10, timeMs: 1300, noise: 0 },
 };
 
-/** Static evaluation from the point of view of `me`. */
-function evaluate(state, me) {
-  if (state.winner !== null) {
-    if (state.winner === 'draw') return 0;
-    return state.winner === me ? WIN : -WIN;
-  }
-  const foe = 1 - me;
-  let score = 0;
-  let myCore = null;
-  let foeCore = null;
-  for (const p of state.pieces) {
-    const sign = p.owner === me ? 1 : -1;
-    if (p.kind === 'core') {
-      if (p.owner === me) myCore = p;
-      else foeCore = p;
-    } else {
-      score += 100 * sign;
-      // atoms like to stand near the centre where they can guard the Nucleus
-      const dc = Math.abs(p.x - 2) + Math.abs(p.y - 2);
-      score += (4 - dc) * 3 * sign;
-    }
-  }
-  // Fusion pressure: a Core on the Nucleus is a ticking clock.
-  for (const [core, sign, player] of [
-    [myCore, 1, me],
-    [foeCore, -1, foe],
-  ]) {
-    if (!core) continue;
-    const d = Math.abs(core.x - REACTOR.x) + Math.abs(core.y - REACTOR.y);
-    score += (4 - d) * 6 * sign;
-    if (d === 0) score += (40 + 90 * state.fusion[player]) * sign;
-  }
-  // Threats against each Core, given the cards the attacker currently holds.
-  score -= threatCount(state, me) * (state.turn === me ? 25 : 120);
-  score += threatCount(state, foe) * (state.turn === foe ? 25 : 120);
-  // Mobility
-  score += (mobility(state, me) - mobility(state, foe)) * 2;
-  return score;
-}
-
-function threatCount(state, player) {
-  const core = state.pieces.find((p) => p.owner === player && p.kind === 'core');
-  if (!core) return 3;
-  const enemy = 1 - player;
+/** How many ways `attacker` could hit square (x, y) with the cards in their hand. */
+function attacks(state, attacker, x, y, onlyCore = false) {
   let n = 0;
-  for (const card of state.hands[enemy]) {
+  for (const card of state.hands[attacker]) {
     for (const p of state.pieces) {
-      if (p.owner !== enemy) continue;
-      for (const [dx, dy] of cardOffsets(card, enemy)) {
-        if (p.x + dx === core.x && p.y + dy === core.y) n++;
+      if (p.owner !== attacker || (onlyCore && p.kind !== 'core')) continue;
+      for (const [dx, dy] of cardOffsets(card, attacker)) {
+        if (p.x + dx === x && p.y + dy === y) n++;
       }
     }
   }
@@ -84,9 +42,48 @@ function mobility(state, player) {
   return n;
 }
 
+/** Static evaluation from the point of view of `me`. */
+function evaluate(state, me) {
+  if (state.winner !== null) {
+    if (state.winner === 'draw') return 0;
+    return state.winner === me ? WIN : -WIN;
+  }
+  const foe = 1 - me;
+  let score = 0;
+  const cores = [null, null];
+  for (const p of state.pieces) {
+    const sign = p.owner === me ? 1 : -1;
+    if (p.kind === 'core') {
+      cores[p.owner] = p;
+      continue;
+    }
+    score += 100 * sign;
+    const dc = Math.abs(p.x - 2) + Math.abs(p.y - 2);
+    score += (4 - dc) * 3 * sign;
+  }
+  for (const player of [me, foe]) {
+    const core = cores[player];
+    if (!core) continue;
+    const sign = player === me ? 1 : -1;
+    const gate = GATES[1 - player];
+    const d = Math.abs(core.x - gate.x) + Math.abs(core.y - gate.y);
+    score += (6 - d) * 5 * sign;
+    // Danger: threats against this leader, and the enemy leader eyeing this player's gate.
+    const enemy = 1 - player;
+    const toMove = state.turn === enemy;
+    const hits = attacks(state, enemy, core.x, core.y);
+    const myGate = GATES[player];
+    const raid = attacks(state, enemy, myGate.x, myGate.y, true);
+    score -= (hits * (toMove ? 400 : 60) + raid * (toMove ? 400 : 50)) * sign;
+  }
+  score += (mobility(state, me) - mobility(state, foe)) * 2;
+  return score;
+}
+
 function orderMoves(state, moves) {
   const occ = new Map();
   for (const p of state.pieces) occ.set(p.y * 5 + p.x, p);
+  const gate = GATES[1 - state.turn];
   return moves
     .map((m) => {
       let k = 0;
@@ -94,7 +91,7 @@ function orderMoves(state, moves) {
         const t = occ.get(m.to.y * 5 + m.to.x);
         if (t) k += t.kind === 'core' ? 10000 : 500;
         const piece = state.pieces.find((p) => p.id === m.piece);
-        if (piece && piece.kind === 'core' && m.to.x === REACTOR.x && m.to.y === REACTOR.y) k += 300;
+        if (piece && piece.kind === 'core' && m.to.x === gate.x && m.to.y === gate.y) k += 9000;
       }
       return { m, k };
     })
@@ -173,5 +170,3 @@ export function chooseMove(state, level = 'normal', rng = Math.random) {
   }
   return scored[0].m;
 }
-
-export { FUSION_TURNS };

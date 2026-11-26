@@ -1,11 +1,23 @@
-// Atomami — rules engine.
+// Atomami — rules engine (classic card-passing rules).
 // Pure functions over plain JSON state, shared by the browser client,
 // the AI worker and the online server (which is the authority in online games).
+//
+// Rules in short:
+// - 5x5 board, each player has 1 leader ("core") and 4 pawns ("atoms").
+// - 5 movement cards per game: 2 in each hand and 1 on the side.
+// - On your turn you use one of your cards to move one piece. The card you used
+//   goes to the side and you take the side card, so your opponent receives the
+//   card you used after their next move.
+// - Win by capturing the enemy leader, or by moving your leader onto the square
+//   where the enemy leader started (their "gate").
 
 export const SIZE = 5;
-export const REACTOR = { x: 2, y: 2 };
-export const FUSION_TURNS = 2; // turns your Core must start on the Nucleus to win
 export const MAX_PLIES = 200; // safety net: game is a draw after this many moves
+/** Starting square of each player's leader: the square the other player must reach. */
+export const GATES = [
+  { x: 2, y: SIZE - 1 },
+  { x: 2, y: 0 },
+];
 
 // Move offsets are written from the point of view of the player using the card:
 // dy < 0 means "forward" (towards the opponent), dx > 0 means "to the right".
@@ -67,12 +79,12 @@ function shuffle(list, rng) {
  * @param {object} [opts]
  * @param {number} [opts.seed]   deterministic shuffle / first player
  * @param {0|1}    [opts.first]  force the first player
- * @param {string[]} [opts.cards] force the 6 cards: [p0, p0, p1, p1, flux, flux]
+ * @param {string[]} [opts.cards] force the 5 cards: [p0, p0, p1, p1, side]
  */
 export function newGame(opts = {}) {
   const seed = opts.seed ?? Math.floor(Math.random() * 2 ** 31);
   const rng = makeRng(seed);
-  const deck = opts.cards ? opts.cards.slice() : shuffle(CARD_IDS, rng).slice(0, 6);
+  const deck = opts.cards ? opts.cards.slice() : shuffle(CARD_IDS, rng).slice(0, 5);
   const first = opts.first ?? (rng() < 0.5 ? 0 : 1);
 
   const pieces = [];
@@ -90,16 +102,15 @@ export function newGame(opts = {}) {
   }
 
   const state = {
-    v: 1,
+    v: 2,
     pieces,
     hands: [[deck[0], deck[1]], [deck[2], deck[3]]],
-    flux: [deck[4], deck[5]],
+    side: deck[4],
     turn: first,
     first,
     ply: 0,
-    fusion: [0, 0],
     winner: null, // 0 | 1 | 'draw'
-    reason: null, // 'fission' | 'fusion' | 'repetition' | 'limit' | 'resign'
+    reason: null, // 'capture' | 'gate' | 'repetition' | 'limit' | 'resign'
     lastMove: null,
     seen: {},
   };
@@ -112,8 +123,6 @@ export function clone(state) {
     ...state,
     pieces: state.pieces.map((p) => ({ ...p })),
     hands: [state.hands[0].slice(), state.hands[1].slice()],
-    flux: state.flux.slice(),
-    fusion: state.fusion.slice(),
     lastMove: state.lastMove ? { ...state.lastMove } : null,
     seen: { ...state.seen },
   };
@@ -133,22 +142,22 @@ function positionKey(state) {
     cells[p.y * SIZE + p.x] = p.kind === 'core' ? (p.owner ? 'C' : 'c') : p.owner ? 'A' : 'a';
   }
   const hand = (h) => h.slice().sort().join(',');
-  return `${cells.join('')}|${hand(state.hands[0])}|${hand(state.hands[1])}|${hand(state.flux)}|${state.turn}|${state.fusion.join('')}`;
+  return `${cells.join('')}|${hand(state.hands[0])}|${hand(state.hands[1])}|${state.side}|${state.turn}`;
 }
 
 // ---------- moves ----------
 
 /**
  * Every legal move for the player to move.
- * A move is { card, piece, to: {x, y}, take } or, when no piece can move,
- * { card, pass: true, take }. `take` is the Flux card the player drafts.
+ * A move is { card, piece, to: {x, y} } or, when no piece can move at all,
+ * { card, pass: true } (the player still gives up that card).
  */
 export function legalMoves(state) {
   if (state.winner !== null) return [];
   const player = state.turn;
   const moves = [];
-  const hand = state.hands[player];
-  for (const card of uniq(hand)) {
+  const hand = [...new Set(state.hands[player])];
+  for (const card of hand) {
     for (const piece of state.pieces) {
       if (piece.owner !== player) continue;
       for (const [dx, dy] of cardOffsets(card, player)) {
@@ -157,18 +166,14 @@ export function legalMoves(state) {
         if (!inside(x, y)) continue;
         const target = pieceAt(state, x, y);
         if (target && target.owner === player) continue;
-        for (const take of uniq(state.flux)) moves.push({ card, piece: piece.id, to: { x, y }, take });
+        moves.push({ card, piece: piece.id, to: { x, y } });
       }
     }
   }
   if (moves.length === 0) {
-    for (const card of uniq(hand)) for (const take of uniq(state.flux)) moves.push({ card, pass: true, take });
+    for (const card of hand) moves.push({ card, pass: true });
   }
   return moves;
-}
-
-function uniq(list) {
-  return [...new Set(list)];
 }
 
 /** Destinations a piece could reach with a card (ignores whose turn it is). */
@@ -194,9 +199,9 @@ export function isLegal(state, move) {
 
 export function sameMove(a, b) {
   if (!a || !b) return false;
-  if (a.card !== b.card || a.take !== b.take) return false;
+  if (a.card !== b.card) return false;
   if (a.pass || b.pass) return !!a.pass === !!b.pass;
-  return a.piece === b.piece && a.to && b.to && a.to.x === b.to.x && a.to.y === b.to.y;
+  return a.piece === b.piece && !!a.to && !!b.to && a.to.x === b.to.x && a.to.y === b.to.y;
 }
 
 /**
@@ -210,30 +215,31 @@ export function applyMove(state, move, { track = true } = {}) {
   const opponent = 1 - player;
   let captured = null;
   let from = null;
+  let moved = null;
 
   if (!move.pass) {
-    const piece = s.pieces.find((p) => p.id === move.piece);
-    from = { x: piece.x, y: piece.y };
+    moved = s.pieces.find((p) => p.id === move.piece);
+    from = { x: moved.x, y: moved.y };
     const target = pieceAt(s, move.to.x, move.to.y);
     if (target) {
       captured = { id: target.id, kind: target.kind, owner: target.owner };
       s.pieces = s.pieces.filter((p) => p !== target);
     }
-    piece.x = move.to.x;
-    piece.y = move.to.y;
+    moved.x = move.to.x;
+    moved.y = move.to.y;
   }
 
-  // Card flow: the played card enters the Flux, the drafted card joins the hand.
+  // Card flow: the used card goes to the side, the side card joins the hand.
+  const received = s.side;
   const hand = s.hands[player];
   hand.splice(hand.indexOf(move.card), 1);
-  s.flux.splice(s.flux.indexOf(move.take), 1);
-  hand.push(move.take);
-  s.flux.push(move.card);
+  hand.push(received);
+  s.side = move.card;
 
   s.lastMove = {
     player,
     card: move.card,
-    take: move.take,
+    received,
     piece: move.piece ?? null,
     from,
     to: move.pass ? null : { ...move.to },
@@ -245,21 +251,14 @@ export function applyMove(state, move, { track = true } = {}) {
 
   if (captured && captured.kind === 'core') {
     s.winner = player;
-    s.reason = 'fission';
+    s.reason = 'capture';
     return s;
   }
-
-  // Next player's turn starts: check Fusion (Core held on the Nucleus).
-  const core = s.pieces.find((p) => p.owner === opponent && p.kind === 'core');
-  if (core && core.x === REACTOR.x && core.y === REACTOR.y) {
-    s.fusion[opponent] += 1;
-    if (s.fusion[opponent] >= FUSION_TURNS) {
-      s.winner = opponent;
-      s.reason = 'fusion';
-      return s;
-    }
-  } else {
-    s.fusion[opponent] = 0;
+  const gate = GATES[opponent];
+  if (moved && moved.kind === 'core' && moved.x === gate.x && moved.y === gate.y) {
+    s.winner = player;
+    s.reason = 'gate';
+    return s;
   }
 
   if (track) {
@@ -285,7 +284,7 @@ export function resign(state, player) {
   return s;
 }
 
-/** True if any enemy piece could capture this player's Core next turn (ignoring whose turn it is). */
+/** True if any enemy piece could capture this player's leader next turn (ignoring whose turn it is). */
 export function coreThreatened(state, player) {
   const core = state.pieces.find((p) => p.owner === player && p.kind === 'core');
   if (!core) return true;

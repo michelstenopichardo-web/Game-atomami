@@ -4,13 +4,13 @@ Duelo de estrategia por turnos para iPhone. Juega **online con amigos**, **contr
 
 Es una web app (PWA): se abre en Safari y se instala en la pantalla de inicio como si fuera una app, sin pasar por la App Store.
 
-## Cómo se juega
+## Cómo se juega (reglas clásicas)
 
-- Tablero de 5×5. Cada equipo tiene **1 pieza líder** y **4 piezas normales**.
-- Hay 16 cartas de movimiento. En cada partida se usan 6: 2 para cada jugador y 2 en el centro (el **Crisol**, o el **Flujo** en el tema Átomos).
+- Tablero de 5×5. Cada equipo tiene **1 líder** y **4 piezas** más.
+- Hay 16 cartas de movimiento; en cada partida se usan 5: 2 para cada jugador y 1 en **Siguiente**.
 - En tu turno usas una de tus cartas para mover una pieza. Si caes sobre una pieza rival, la capturas.
-- **Draft:** la carta que usaste va al centro y te quedas con una de las 2 que había allí. Tu rival puede llevarse la carta que acabas de usar.
-- **Ganas de dos formas:** capturando la pieza líder rival, o si tu líder empieza 2 de tus turnos seguidos en la casilla central.
+- La carta que usaste pasa a **Siguiente** y tú te quedas con la que estaba allí. Después de su jugada, tu rival se queda con la carta que usaste.
+- **Ganas** si capturas al líder rival, o si llevas tu líder a la casilla donde empezó el líder rival (está marcada en el tablero).
 
 Las reglas completas están dentro de la app, en «Cómo jugar».
 
@@ -18,10 +18,11 @@ Las reglas completas están dentro de la app, en «Cómo jugar».
 
 El tema solo cambia el aspecto; las reglas son las mismas. Se elige en la pantalla de inicio o en el menú de la partida. En online cada jugador ve el tema que haya elegido.
 
-- **Medianoche** (por defecto): la Casa del Sol contra la Casa de la Luna. Cada una tiene un Alquimista y 4 Gólems, y se disputan el Atanor, el horno alquímico del centro. Las cartas llevan los nombres de los metales y elementos de la alquimia clásica (Oro ☉, Plata ☽, Mercurio ☿, Fuego △…). Se gana por Captura o por Transmutación.
-- **Átomos**: Ámbar contra Cobalto, con Núcleos, Átomos, el Reactor y cartas de partículas. Se gana por Fisión o por Fusión.
+- **Mistborn (fan)** (por defecto): la Banda (Kelsier, Vin, Sazed, Brisa y Ham) contra el Imperio Final (el Lord Legislador y cuatro Inquisidores de Acero). La casilla del Imperio es Kredik Shaw. Las 16 cartas son los 16 metales. Es un tema hecho por fans, no oficial y para uso personal: Mistborn y sus personajes son de Brandon Sanderson. Los dibujos son originales y sencillos; no incluye arte, logotipos ni textos de los libros.
+- **Medianoche**: la Casa del Sol contra la Casa de la Luna, con alquimistas, gólems y las cartas de la alquimia clásica.
+- **Átomos**: Ámbar contra Cobalto, con Núcleos, Átomos y cartas de partículas.
 
-Los temas están en `public/js/themes.js`: nombres, textos, piezas (SVG) y cartas. Los colores y el estilo, en `public/style.css` (sección «Theme: Midnight Alchemy»).
+Los temas están en `public/js/themes.js` (nombres, textos, piezas en SVG y cartas). Los colores y el estilo, en `public/style.css`.
 
 ## Ponerlo online (gratis, ~5 minutos)
 
@@ -73,7 +74,7 @@ Para probar desde el iPhone en tu misma red Wi-Fi, abre `http://IP-de-tu-ordenad
 | `public/js/ai.js` | IA (búsqueda alfa-beta) con 3 dificultades; corre en un Web Worker |
 | `public/js/app.js` | Pantallas, tablero, gestos y conexión online |
 | `public/js/i18n.js` | Textos en español e inglés |
-| `public/js/themes.js` | Temas visuales (Medianoche y Átomos) |
+| `public/js/themes.js` | Temas visuales (Mistborn fan, Medianoche y Átomos) |
 | `server/index.js` | Servidor web + salas online por WebSocket (valida cada jugada) |
 | `scripts/selfplay.mjs` | La IA juega contra sí misma para revisar el equilibrio |
 | `scripts/make-icons.cjs` | Genera los iconos PNG a partir de `scripts/icon.svg` |
@@ -83,4 +84,4 @@ Para probar desde el iPhone en tu misma red Wi-Fi, abre `http://IP-de-tu-ordenad
 
 ## English
 
-Atomami is a turn-based strategy duel for iPhone, installable as a PWA. Play online with friends (private rooms with invite links, or quick match), against a 3-level AI, or pass-and-play on one phone. Deploy the server for free on Render with the included `render.yaml` (New → Blueprint), or anywhere that runs Docker. Run locally with `npm install && npm start`; tests with `npm test`.
+Atomami is a turn-based strategy duel for iPhone with classic card-passing rules, installable as a PWA. It ships with three looks: an unofficial Mistborn fan theme for personal use, Midnight Alchemy, and Atoms. Play online with friends (private rooms with invite links, or quick match), against a 3-level AI, or pass-and-play on one phone. Deploy the server for free on Render with the included `render.yaml` (New → Blueprint), or anywhere that runs Docker. Run locally with `npm install && npm start`; tests with `npm test`.

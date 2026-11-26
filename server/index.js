@@ -235,8 +235,8 @@ function handle(ws, msg) {
       if (!isLegal(room.state, msg.move)) return send(ws, { type: 'error', code: 'illegal' });
       const m = msg.move;
       const move = m.pass
-        ? { card: m.card, pass: true, take: m.take }
-        : { card: m.card, piece: m.piece, to: { x: m.to.x, y: m.to.y }, take: m.take };
+        ? { card: m.card, pass: true }
+        : { card: m.card, piece: m.piece, to: { x: m.to.x, y: m.to.y } };
       room.state = applyMove(room.state, move);
       room.touched = Date.now();
       broadcast(room);

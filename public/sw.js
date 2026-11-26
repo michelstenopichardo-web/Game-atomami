@@ -1,6 +1,6 @@
 // Atomami service worker: lets the app open offline (AI and same-phone modes).
 // Network-first so players always get the latest version when online.
-const CACHE = 'atomami-v2';
+const CACHE = 'atomami-v3';
 const SHELL = [
   './',
   'index.html',

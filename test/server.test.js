@@ -88,7 +88,7 @@ test('create room, join, play a full game, rematch, reconnect', async () => {
   notTurn.send({ type: 'move', move: legalMoves({ ...st.state, turn: 1 - st.state.turn, seen: {} })[0] });
   await notTurn.next((m) => m.type === 'error' && m.code === 'not-your-turn');
   // garbage move is rejected
-  players[st.state.turn].send({ type: 'move', move: { card: 'boson', piece: '02', to: { x: 9, y: 9 }, take: 'x' } });
+  players[st.state.turn].send({ type: 'move', move: { card: 'boson', piece: '02', to: { x: 9, y: 9 } } });
   await players[st.state.turn].next((m) => m.type === 'error' && m.code === 'illegal');
 
   // play random legal moves (at most 40, like a real game would pace them), then resign
