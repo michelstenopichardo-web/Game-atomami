@@ -1,0 +1,10 @@
+# Render Blueprint: one free web service that serves the app and the online rooms.
+services:
+  - type: web
+    name: atomami
+    runtime: node
+    plan: free
+    buildCommand: npm install --omit=dev
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeploy: true

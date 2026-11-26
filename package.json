@@ -1,0 +1,18 @@
+{
+  "name": "atomami",
+  "version": "1.0.0",
+  "description": "Atomami: juego de estrategia por turnos para iPhone (PWA) con multijugador online.",
+  "type": "module",
+  "private": true,
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

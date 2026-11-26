@@ -1,0 +1,16 @@
+{
+  "name": "Atomami",
+  "short_name": "Atomami",
+  "description": "Duelo de estrategia atómica: online, contra la IA o en el mismo iPhone.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0d1a",
+  "theme_color": "#0b0d1a",
+  "lang": "es",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
