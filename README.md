@@ -54,6 +54,8 @@ npm test           # reglas, IA y servidor online
 
 Para probar desde el iPhone en tu misma red Wi-Fi, abre `http://IP-de-tu-ordenador:3000`.
 
+`node scripts/build-offline.mjs` genera `dist/atomami-offline.html`: un único archivo con los modos sin conexión (contra la IA y 2 jugadores en el mismo iPhone), útil como demo sin servidor.
+
 ### Estructura
 
 | Archivo | Qué hace |
@@ -65,6 +67,7 @@ Para probar desde el iPhone en tu misma red Wi-Fi, abre `http://IP-de-tu-ordenad
 | `server/index.js` | Servidor web + salas online por WebSocket (valida cada jugada) |
 | `scripts/selfplay.mjs` | La IA juega contra sí misma para revisar el equilibrio |
 | `scripts/make-icons.cjs` | Genera los iconos PNG a partir de `scripts/icon.svg` |
+| `scripts/build-offline.mjs` | Crea la versión de un solo archivo sin modo online |
 
 ---
 

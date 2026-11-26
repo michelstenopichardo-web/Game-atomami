@@ -2,6 +2,10 @@
 import { newGame, legalMoves, applyMove, resign, targetsFor, pieceAt, sameMove, CARDS, CARD_IDS, REACTOR, SIZE } from './game.js';
 import { t, setLang, getLang } from './i18n.js';
 import { play, unlockAudio, setSoundEnabled, soundEnabled } from './sound.js';
+import { chooseMove } from './ai.js';
+
+// Set by the single-file offline build (scripts/build-offline.mjs): no server available.
+const OFFLINE_ONLY = !!window.ATOMAMI_OFFLINE;
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => [...document.querySelectorAll(sel)];
@@ -71,6 +75,22 @@ function toast(text, ms = 2200) {
   el.hidden = false;
   clearTimeout(toast.timer);
   toast.timer = setTimeout(() => (el.hidden = true), ms);
+}
+
+/** In-app yes/no question (window.confirm is unreliable in installed web apps). */
+function ask(question) {
+  return new Promise((resolve) => {
+    $('#confirm-text').textContent = question;
+    openOverlay('overlay-confirm');
+    const done = (answer) => {
+      closeOverlay('overlay-confirm');
+      $('#btn-confirm-yes').onclick = null;
+      $('#btn-confirm-no').onclick = null;
+      resolve(answer);
+    };
+    $('#btn-confirm-yes').onclick = () => done(true);
+    $('#btn-confirm-no').onclick = () => done(false);
+  });
 }
 
 function openOverlay(id) {
@@ -443,7 +463,7 @@ let workerSeq = 0;
 function getWorker() {
   if (worker !== null) return worker;
   try {
-    worker = new Worker(new URL('./ai-worker.js', import.meta.url), { type: 'module' });
+    worker = new Worker(window.ATOMAMI_WORKER_URL || new URL('./ai-worker.js', import.meta.url), { type: 'module' });
   } catch {
     worker = false;
   }
@@ -458,16 +478,20 @@ async function aiMove(state, level) {
       return await new Promise((resolve, reject) => {
         const onMsg = (e) => {
           if (e.data.id !== id) return;
+          clearTimeout(timer);
           w.removeEventListener('message', onMsg);
           w.removeEventListener('error', onErr);
           if (e.data.error) reject(new Error(e.data.error));
           else resolve(e.data.move);
         };
         const onErr = (e) => {
+          clearTimeout(timer);
           w.removeEventListener('message', onMsg);
           w.removeEventListener('error', onErr);
           reject(e);
         };
+        // a worker that never answers (blocked by the browser) counts as an error
+        const timer = setTimeout(() => onErr(new Error('worker timeout')), 8000);
         w.addEventListener('message', onMsg);
         w.addEventListener('error', onErr);
         w.postMessage({ id, state, level });
@@ -476,7 +500,6 @@ async function aiMove(state, level) {
       worker = false; // fall back to the main thread from now on
     }
   }
-  const { chooseMove } = await import('./ai.js');
   await new Promise((r) => setTimeout(r, 30));
   return chooseMove(state, level);
 }
@@ -951,17 +974,18 @@ function wire() {
   $$('[data-close]').forEach((b) => b.addEventListener('click', () => (b.closest('.overlay').hidden = true)));
   $$('.overlay').forEach((o) =>
     o.addEventListener('click', (e) => {
-      if (e.target === o && o.id !== 'overlay-end') o.hidden = true;
+      if (e.target === o && o.id !== 'overlay-end' && o.id !== 'overlay-confirm') o.hidden = true;
     }),
   );
   $('#btn-m-rules').addEventListener('click', () => {
     closeOverlay('overlay-menu');
     openOverlay('overlay-rules');
   });
-  $('#btn-m-resign').addEventListener('click', () => {
+  $('#btn-m-resign').addEventListener('click', async () => {
     if (!app.game || app.game.winner !== null) return;
-    if (!confirm(t('confirmResign'))) return;
     closeOverlay('overlay-menu');
+    if (!(await ask(t('confirmResign')))) return;
+    if (!app.game || app.game.winner !== null) return;
     if (app.mode === 'online') {
       sendOnline({ type: 'resign' });
       return;
@@ -1025,7 +1049,12 @@ function init() {
 
   const standalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
-  $('#install-hint').hidden = !(ios && !standalone);
+  $('#install-hint').hidden = !(ios && !standalone) || OFFLINE_ONLY;
+  if (OFFLINE_ONLY) {
+    $('#btn-online').hidden = true;
+    $('#offline-note').hidden = false;
+    return;
+  }
 
   // invite links: ?room=ABCD
   const params = new URLSearchParams(location.search);

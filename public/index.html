@@ -52,6 +52,7 @@
         <button class="btn ghost" id="btn-rules"><span class="ico">📖</span><span data-i18n="howToPlay"></span></button>
       </div>
       <p class="install-hint" id="install-hint" data-i18n="installHint" hidden></p>
+      <p class="install-hint" id="offline-note" data-i18n="offlineNote" hidden></p>
     </section>
 
     <!-- ============ ONLINE MENU ============ -->
@@ -170,6 +171,16 @@
         <button class="btn primary" id="btn-again"><span class="ico">🔁</span><span id="btn-again-label" data-i18n="playAgain"></span></button>
         <button class="btn ghost" id="btn-view"><span class="ico">👁️</span><span data-i18n="viewBoard"></span></button>
         <button class="btn ghost" id="btn-end-exit"><span class="ico">🚪</span><span data-i18n="exitToMenu"></span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay-confirm" hidden>
+    <div class="sheet small end">
+      <h2 id="confirm-text"></h2>
+      <div class="sheet-body">
+        <button class="btn primary" id="btn-confirm-yes"><span data-i18n="yes"></span></button>
+        <button class="btn ghost" id="btn-confirm-no"><span data-i18n="no"></span></button>
       </div>
     </div>
   </div>
